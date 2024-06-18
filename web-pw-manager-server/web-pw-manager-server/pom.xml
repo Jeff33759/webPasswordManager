@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>raica.demo</groupId>
+    <artifactId>web-pw-manager-server</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <spring.boot.ver>2.7.2</spring.boot.ver>
+        <mapstruct.ver>1.5.5.Final</mapstruct.ver>
+        <jjwt.ver>0.12.5</jjwt.ver>
+    </properties>
+
+    <dependencies>
+
+        <!-- Web開發 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <version>${spring.boot.ver}</version>
+        </dependency>
+        <dependency> <!-- 驗證參數合法性 -->
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+            <version>${spring.boot.ver}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+            <version>${spring.boot.ver}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+            <version>${spring.boot.ver}</version>
+        </dependency>
+
+        <!-- DB相關 -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.30</version>
+        </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <version>3.5.6</version>
+        </dependency>
+        <dependency> <!-- myBatis執行效能監控 -->
+            <groupId>p6spy</groupId>
+            <artifactId>p6spy</artifactId>
+            <version>3.9.1</version>
+        </dependency>
+
+        <!-- 開發工具 -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.24</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency> <!-- 物件轉換 -->
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${mapstruct.ver}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct-processor</artifactId>
+            <version>${mapstruct.ver}</version>
+        </dependency>
+        <dependency> <!-- 第三方演算法提供商，提供一些Java標準函式庫沒有提供的哈希演算法或加密演算法 -->
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>1.78.1</version>
+        </dependency>
+        <!-- JWT相關 -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>${jjwt.ver}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>${jjwt.ver}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>${jjwt.ver}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- 測試相關 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <version>${spring.boot.ver}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency> <!-- 讓Mockito.mockStatic可以用 -->
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-inline</artifactId>
+            <version>5.2.0</version>
+            <scope>test</scope>
+        </dependency>
+
+
+
+    </dependencies>
+
+    <profiles> <!-- mvn打包的時候，下mvn clean package -P <profile-id>，決定要打包出來的東西是for哪個環境。 -->
+        <profile>
+            <id>dev</id> <!-- mvn clean package -P <profile-id> -->
+            <activation>
+                <activeByDefault>true</activeByDefault> <!-- 如果mvn package沒帶-P參數，又或者帶的P參數沒有匹配到這裡的任一profile-id，則預設是mvn package -P dev -->
+            </activation>
+            <properties>
+                <activeProfile>dev</activeProfile> <!-- 當有人在配置檔@activeProfile@時，要映射給他什麼值 -->
+            </properties>
+        </profile>
+    </profiles>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId> <!-- Spring-boot與maven整合的打包插件，spring-boot:repackage指令打包出來的東西，才能夠直接執行 -->
+                <version>2.7.2</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase> <!-- 指定哪個phase -->
+                        <goals>
+                            <goal>repackage</goal> <!-- 當跑到package-phase時，要做啥goal。當執行mvn package時，spring-boot:repackage將被自動執行。 -->
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+
+        <resources> <!-- 告訴Maven在構建項目的過程中如何處理資源文件 -->
+            <resource>
+                <directory>src/main/resources</directory> <!-- 指定了資源文件的所在目錄 -->
+                <filtering>true</filtering> <!-- 是否開啟過濾器功能，設置為true可去替換yml或properties的@@佔位符。預設false -->
+                <includes> <!-- resource指定的一些功能要奏效到directory所指定的目錄中的哪些檔案 -->
+                    <include>**/*.*</include> <!-- 所有檔案，不論檔名與副檔名 -->
+                </includes>
+            </resource>
+        </resources>
+    </build>
+
+
+
+</project>

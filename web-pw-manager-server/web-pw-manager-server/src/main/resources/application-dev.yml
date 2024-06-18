@@ -1,0 +1,61 @@
+## 啟動配置 ##
+server:
+  port: 8001
+
+## DB連接設置 ##
+spring.datasource:
+  driver-class-name: com.p6spy.engine.spy.P6SpyDriver
+  url: jdbc:p6spy:mysql://127.0.0.1:3306/raica_pw_manager?characterEncoding=utf-8
+  username: root
+  password: raica123
+
+## mail server設置 ##
+spring.mail:
+  # 郵件服務主機
+  host: smtp.gmail.com
+  port: 587
+  # 郵件服務帳密
+  username: ub23467@gmail.com
+  password: voxqoubxmlaeetjo
+  # 傳輸協定
+  properties.mail.transport.protocol: smtp
+  # 是否向郵件服務驗證身份
+  properties.mail.smtp.auth: true
+  # 是否啟用TLS(傳輸層安全)，對通訊加密
+  properties.mail.smtp.starttls.enable: true
+
+## 系統參數設置 ##
+system-items:
+  encryption: #加解密相關
+    aes:
+      for-db-privacy-data: #DB端隱密資料的加解密
+        transformation: "AES/ECB/PKCS7Padding"
+        secret-key: "aesSecretKey_dev" #必須為128/192/256 bits.
+      for-email-activation-flow: #用於註冊時的郵箱激活資訊加解密
+        transformation: "AES/ECB/PKCS7Padding"
+        secret-key: "aesKey4Email_dev" #必須為128/192/256 bits.
+  app-info: #應用程式的資訊
+    name: WebPasswordManager
+    access-addr-prefix: http://127.0.0.1:${server.port}
+    mail-sender-name: ${system-items.app-info.name}<${spring.mail.username}>
+  expiration: #一切有關有效期限的參數，格式為ISO-8601
+    email-activation: PT1M #一封郵箱激活信的有效期限
+    user-inactivated: PT3M #新用戶註冊後多久必須郵箱激活的期限，超過期限會刪除用戶資料
+    mfa-login-verification: PT1M #設置MFA的用戶，必須在登入驗證碼生成後多久以內，完成輸入驗證碼的動作
+  scheduler: #排程相關
+    task: #任務的執行週期，格式為ISO-8601
+      inactivated-user-deletion: #定期清理未進行郵箱激活的用戶
+        fixed-delay: PT3M
+  jwt: #jwt相關
+    access-token: #使用HS256
+      secret-key: accessTokenSecretKeyForDevelopInv #至少32個字
+      expiration: PT5M #有效時間，格式為ISO-8601
+    refresh-token: #使用HS256
+      secret-key: refreshTokenSecretKeyForDevelopInv #至少32個字
+      expiration: PT30M #有效時間，格式為ISO-8601
+  cors: #跨來源網域相關
+    allowedOriginsList: #允許的網域
+      - "*"
+    allowedMethodList: #允許的方法
+      - "*"
+

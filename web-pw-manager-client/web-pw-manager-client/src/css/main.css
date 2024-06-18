@@ -1,0 +1,128 @@
+#app {;
+    padding: 0 0.2rem;
+}
+
+.full-width {
+    width: 100% !important;
+}
+
+.full-height {
+    height: 100% !important;
+}
+
+.text-align-center { /* 文字水平置中 */
+    text-align: center;
+}
+
+.align-items { /* 元素垂直置中 */
+    align-items: center;
+}
+
+.text-overflow-hidden { /*文字超出水平範圍就隱藏 */
+    overflow: hidden; /* 溢出隱藏 */
+    text-overflow: ellipsis; /* 超出部分顯示省略號 */
+    white-space: nowrap; /* 強制不換行 */
+}
+
+.horizontal-scroll { /* 元素超過容器的水平範圍，可以滾動 */
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.vertical-scroll { /* 元素超過容器的垂直範圍，可以滾動 */
+    max-height: 100%;
+    overflow-x: auto;
+}
+
+.my-background-color {
+    background-color: var(--el-color-info-light-8);
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.invisible {
+    visibility: hidden; /* 隱藏元素但保留位置 */
+}
+
+.no-padding {
+    padding: 0;
+}
+
+.not-login-main-padding {
+    padding-top: 2rem;
+    padding-left: 1rem;
+    padding-right: 2rem;
+}
+
+.not-login-header-font-size {
+    font-size: 3rem
+}
+
+.my-form-label-size .el-form-item__label {
+    font-size: 2rem;
+}
+
+.my-user-edit-form-label-size .el-form-item__label {
+    font-size: 1.5rem;
+}
+
+.my-edit-main-password-form-label-size .el-form-item__label {
+    font-size: 1.5rem;
+}
+
+.right-body-form-label-size .el-form-item__label {
+    font-size: 1.5rem;
+}
+
+
+.el-overlay-dialog {
+    font-size: 2rem;
+}
+
+/* 自定義 Element Plus 按鈕樣式 */
+
+.el-message-box__content {
+    font-size: 1.5rem !important; /* 調整消息內容的字體大小 */
+}
+
+.el-message-box__title {
+    font-size: 3rem !important; /* 調整標題的字體大小 */
+}
+
+.el-message-box__status {
+    font-size: 2rem !important; /* 改變圖標大小 */
+}
+
+
+.el-button { /* 默認按鈕調整 */
+    font-size: 2rem;
+    width: 30%;
+}
+
+/* 調整 ElMessage 的樣式 */
+.el-message {
+    font-size: 2rem !important; /* logo */
+}
+
+.el-message__content {
+    font-size: 2rem !important; /* 內文 */
+}
+
+.my-menu .el-menu-item,
+.my-menu .el-sub-menu__title,
+.my-menu .el-menu-item-group__title {
+    font-size: 1rem;
+}
+
+.my-menu .el-menu-item.is-active { /* 被選中時的CSS */
+    color: inherit;
+    background-color: #d9ecff;
+}
+
+
+.el-icon.hover-light:hover { /* icon的hover */
+    color: #409EFF;
+    transform: scale(1.1);
+}
