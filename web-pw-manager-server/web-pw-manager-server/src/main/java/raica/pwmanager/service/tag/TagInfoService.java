@@ -2,18 +2,17 @@ package raica.pwmanager.service.tag;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import raica.pwmanager.consts.MyExceptionMsgTemplate;
 import raica.pwmanager.dao.extension.impl.TagMappingPasswordService;
 import raica.pwmanager.dao.extension.impl.TagService;
 import raica.pwmanager.entities.bo.MyRequestContext;
+import raica.pwmanager.entities.bo.MyResponseWrapper;
 import raica.pwmanager.entities.bo.MyUserDetails;
 import raica.pwmanager.entities.dto.receive.AddTagReqBody;
 import raica.pwmanager.entities.dto.receive.EditTagReqBody;
@@ -23,6 +22,7 @@ import raica.pwmanager.entities.dto.send.QueryTagsData;
 import raica.pwmanager.entities.dto.send.ResponseBodyTemplate;
 import raica.pwmanager.entities.po.Tag;
 import raica.pwmanager.entities.po.TagMappingPassword;
+import raica.pwmanager.enums.MyHttpStatus;
 import raica.pwmanager.exception.MyUnexpectedException;
 import raica.pwmanager.util.ResponseUtil;
 
@@ -48,7 +48,7 @@ public class TagInfoService {
     private ResponseUtil responseUtil;
 
 
-    public ResponseEntity<ResponseBodyTemplate<QueryTagsData>> queryTags(MyRequestContext myRequestContext) {
+    public MyResponseWrapper queryTags(MyRequestContext myRequestContext) {
         // 1. 取出認證後的User資訊(從AccessToken解碼而來)
         MyUserDetails myUserDetails = myRequestContext.getMyUserDetailsOpt().orElseThrow(() -> new MyUnexpectedException(MyExceptionMsgTemplate.UNAUTHENTICATED_USER));
 
@@ -66,17 +66,16 @@ public class TagInfoService {
         });
 
         // 4. 返回
-        return ResponseEntity.
-                ok(
-                        responseUtil.generateResponseBodyTemplate(
-                                new QueryTagsData(tagDtoList),
-                                ""
-                        )
-                );
+        ResponseBodyTemplate<QueryTagsData> body = responseUtil.generateResponseBodyTemplate(
+                new QueryTagsData(tagDtoList),
+                ""
+        );
+
+        return new MyResponseWrapper(MyHttpStatus.SUCCESS, body);
     }
 
 
-    public ResponseEntity<ResponseBodyTemplate<AddTagData>> addTag(AddTagReqBody addTagReqBody, MyRequestContext myRequestContext) {
+    public MyResponseWrapper addTag(AddTagReqBody addTagReqBody, MyRequestContext myRequestContext) {
         // 1. 取出認證後的User資訊(從AccessToken解碼而來)
         MyUserDetails myUserDetails = myRequestContext.getMyUserDetailsOpt().orElseThrow(() -> new MyUnexpectedException(MyExceptionMsgTemplate.UNAUTHENTICATED_USER));
 
@@ -88,18 +87,16 @@ public class TagInfoService {
         tagService.save(tagToInsert);
 
         // 4.返回
-        return ResponseEntity
-                .ok()
-                .body(
-                        responseUtil.generateResponseBodyTemplate(
-                                tagInfoConverter.tagPoToAddTagDataDto(tagToInsert),
-                                ""
-                        )
-                );
+        ResponseBodyTemplate<AddTagData> body = responseUtil.generateResponseBodyTemplate(
+                tagInfoConverter.tagPoToAddTagDataDto(tagToInsert),
+                ""
+        );
+
+        return new MyResponseWrapper(MyHttpStatus.SUCCESS, body);
     }
 
 
-    public ResponseEntity<ResponseBodyTemplate<EditTagData>> editTag(int tagId, EditTagReqBody editTagReqBody, MyRequestContext myRequestContext) {
+    public MyResponseWrapper editTag(int tagId, EditTagReqBody editTagReqBody, MyRequestContext myRequestContext) {
         // 1. 取出認證後的User資訊(從AccessToken解碼而來)
         MyUserDetails myUserDetails = myRequestContext.getMyUserDetailsOpt().orElseThrow(() -> new MyUnexpectedException(MyExceptionMsgTemplate.UNAUTHENTICATED_USER));
 
@@ -117,18 +114,16 @@ public class TagInfoService {
         }
 
         // 4. 返回
-        return ResponseEntity
-                .ok()
-                .body(
-                        responseUtil.generateResponseBodyTemplate(
-                                new EditTagData(tagId, editTagReqBody.getTagName()),
-                                ""
-                        )
-                );
+        ResponseBodyTemplate<EditTagData> body = responseUtil.generateResponseBodyTemplate(
+                new EditTagData(tagId, editTagReqBody.getTagName()),
+                ""
+        );
+
+        return new MyResponseWrapper(MyHttpStatus.SUCCESS, body);
     }
 
     @Transactional
-    public ResponseEntity<ResponseBodyTemplate<JsonNode>> deleteTag(int tagId, MyRequestContext myRequestContext) {
+    public MyResponseWrapper deleteTag(int tagId, MyRequestContext myRequestContext) {
         // 1. 取出認證後的User資訊(從AccessToken解碼而來)
         MyUserDetails myUserDetails = myRequestContext.getMyUserDetailsOpt().orElseThrow(() -> new MyUnexpectedException(MyExceptionMsgTemplate.UNAUTHENTICATED_USER));
 
@@ -149,11 +144,9 @@ public class TagInfoService {
             throw new MyUnexpectedException(String.format("Tag id: %d and User id: %d does not exist in DB but it should not occurred.", tagId, myUserDetails.getId()));
         }
 
-
         // 4.返回
-        return ResponseEntity
-                .noContent()
-                .build();
+        return new MyResponseWrapper(MyHttpStatus.SUCCESS_NO_CONTENT, null);
+
     }
 
 

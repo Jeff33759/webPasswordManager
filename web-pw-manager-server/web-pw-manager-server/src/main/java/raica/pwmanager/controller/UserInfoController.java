@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import raica.pwmanager.consts.ApiConst;
 import raica.pwmanager.consts.RequestAttributeFieldName;
 import raica.pwmanager.entities.bo.MyRequestContext;
+import raica.pwmanager.entities.bo.MyResponseWrapper;
 import raica.pwmanager.entities.dto.receive.EditUserMainPasswordReqBody;
 import raica.pwmanager.entities.dto.receive.EditUserReqBody;
 import raica.pwmanager.entities.dto.send.EditUserData;
@@ -30,17 +31,17 @@ public class UserInfoController {
     private UserInfoService userInfoService;
 
     @GetMapping(path = ApiConst.Path.QUERY_USER)
-    public ResponseEntity<ResponseBodyTemplate<QueryUserData>> queryUser(@RequestAttribute(value = RequestAttributeFieldName.MY_REQ_CONTEXT) MyRequestContext myReqContext) {
+    public MyResponseWrapper queryUser(@RequestAttribute(value = RequestAttributeFieldName.MY_REQ_CONTEXT) MyRequestContext myReqContext) {
         return userInfoService.queryUser(myReqContext);
     }
 
     @PutMapping(path = ApiConst.Path.EDIT_USER)
-    public ResponseEntity<ResponseBodyTemplate<EditUserData>> editUser(@Valid @RequestBody EditUserReqBody editUserReqBody, @RequestAttribute(value = RequestAttributeFieldName.MY_REQ_CONTEXT) MyRequestContext myReqContext) {
+    public MyResponseWrapper editUser(@Valid @RequestBody EditUserReqBody editUserReqBody, @RequestAttribute(value = RequestAttributeFieldName.MY_REQ_CONTEXT) MyRequestContext myReqContext) {
         return userInfoService.editUser(editUserReqBody, myReqContext);
     }
 
     @PutMapping(path = ApiConst.Path.EDIT_USER_MAIN_PASSWORD)
-    public ResponseEntity<ResponseBodyTemplate<JsonNode>> editUserMainPassword(@Valid @RequestBody EditUserMainPasswordReqBody editUserMainPasswordReqBody, @RequestAttribute(value = RequestAttributeFieldName.MY_REQ_CONTEXT) MyRequestContext myReqContext) {
+    public MyResponseWrapper editUserMainPassword(@Valid @RequestBody EditUserMainPasswordReqBody editUserMainPasswordReqBody, @RequestAttribute(value = RequestAttributeFieldName.MY_REQ_CONTEXT) MyRequestContext myReqContext) {
         return userInfoService.editUserMainPassword(editUserMainPasswordReqBody, myReqContext);
     }
 

@@ -14,10 +14,13 @@ import raica.pwmanager.consts.ApiConst;
 import raica.pwmanager.dao.extension.IUserService;
 import raica.pwmanager.entities.bo.EmailActivationDetail;
 import raica.pwmanager.entities.bo.MyRequestContext;
+import raica.pwmanager.entities.bo.MyResponseWrapper;
 import raica.pwmanager.entities.dto.receive.RegisterReqBody;
 import raica.pwmanager.entities.dto.send.RegisterData;
 import raica.pwmanager.entities.dto.send.ResponseBodyTemplate;
 import raica.pwmanager.entities.po.User;
+import raica.pwmanager.enums.MyHttpStatus;
+import raica.pwmanager.exception.RegisterException;
 import raica.pwmanager.prop.AppInfoProps;
 import raica.pwmanager.prop.ExpirationProps;
 import raica.pwmanager.util.AESUtil;
@@ -66,28 +69,14 @@ public class RegisterService {
     private ObjectMapper objectMapper;
 
 
-    /**
-     * 空的data欄位，用於註冊API操作失敗時的response。
-     * 因為呼叫頻繁，故採用單例，節省系統開銷。
-     */
-    private final RegisterData EMPTY_REGISTER_DATA = new RegisterData();
-
-
-    public ResponseEntity<ResponseBodyTemplate<RegisterData>> register(RegisterReqBody registerReqBody, MyRequestContext myRequestContext) {
+    public MyResponseWrapper register(RegisterReqBody registerReqBody, MyRequestContext myRequestContext) {
 
         //1. 驗證郵箱是否存在
         QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
         userQueryWrapper.eq("email", registerReqBody.getEmail());
 
         if(userService.exists(userQueryWrapper)) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-                            responseUtil.generateResponseBodyTemplate(
-                                    EMPTY_REGISTER_DATA,
-                                    "郵箱已存在。"
-                            )
-                    );
+            throw new RegisterException(MyHttpStatus.ERROR_BAD_REQUEST, "郵箱已存在。");
         }
 
         //2. 轉換物件 & 加密敏感資訊
@@ -103,13 +92,12 @@ public class RegisterService {
         );
 
         //5. 返回
-        return ResponseEntity
-                .ok(
-                        responseUtil.generateResponseBodyTemplate(
-                                registerConverter.userPoToRegisterData(user),
-                                ""
-                        )
-                );
+        ResponseBodyTemplate<RegisterData> body = responseUtil.generateResponseBodyTemplate(
+                registerConverter.userPoToRegisterData(user),
+                ""
+        );
+
+        return new MyResponseWrapper(MyHttpStatus.SUCCESS, body);
     }
 
 

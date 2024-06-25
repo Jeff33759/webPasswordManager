@@ -2,13 +2,11 @@ package raica.pwmanager.service.passwordmanagement;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import raica.pwmanager.consts.MyExceptionMsgTemplate;
@@ -16,6 +14,7 @@ import raica.pwmanager.dao.extension.impl.PasswordService;
 import raica.pwmanager.dao.extension.impl.TagMappingPasswordService;
 import raica.pwmanager.dao.extension.impl.TagService;
 import raica.pwmanager.entities.bo.MyRequestContext;
+import raica.pwmanager.entities.bo.MyResponseWrapper;
 import raica.pwmanager.entities.bo.MyUserDetails;
 import raica.pwmanager.entities.dto.receive.AddPasswordReqBody;
 import raica.pwmanager.entities.dto.receive.EditPasswordReqBody;
@@ -23,6 +22,7 @@ import raica.pwmanager.entities.dto.send.*;
 import raica.pwmanager.entities.po.Password;
 import raica.pwmanager.entities.po.Tag;
 import raica.pwmanager.entities.po.TagMappingPassword;
+import raica.pwmanager.enums.MyHttpStatus;
 import raica.pwmanager.exception.MyUnexpectedException;
 import raica.pwmanager.util.AESUtil;
 import raica.pwmanager.util.ResponseUtil;
@@ -60,7 +60,7 @@ public class PasswordInfoService {
     private PasswordInfoService.PasswordInfoConverter passwordInfoConverter;
 
 
-    public ResponseEntity<ResponseBodyTemplate<QueryPasswordsListData>> queryPasswordsList(MyRequestContext myRequestContext) {
+    public MyResponseWrapper queryPasswordsList(MyRequestContext myRequestContext) {
         // 1. 取出認證後的User資訊(從AccessToken解碼而來)
         MyUserDetails myUserDetails = myRequestContext.getMyUserDetailsOpt().orElseThrow(() -> new MyUnexpectedException(MyExceptionMsgTemplate.UNAUTHENTICATED_USER));
 
@@ -78,17 +78,15 @@ public class PasswordInfoService {
         });
 
         // 5.返回
-        return ResponseEntity
-                .ok()
-                .body(
-                        responseUtil.generateResponseBodyTemplate(
-                                new QueryPasswordsListData(passwordDtoList),
-                                ""
-                        )
-                );
+        ResponseBodyTemplate<QueryPasswordsListData> body = responseUtil.generateResponseBodyTemplate(
+                new QueryPasswordsListData(passwordDtoList),
+                ""
+        );
+
+        return new MyResponseWrapper(MyHttpStatus.SUCCESS, body);
     }
 
-    public ResponseEntity<ResponseBodyTemplate<QueryPasswordsListData>> queryPasswordsListByTag(int tagId, MyRequestContext myRequestContext) {
+    public MyResponseWrapper queryPasswordsListByTag(int tagId, MyRequestContext myRequestContext) {
         // 1. 取出認證後的User資訊(從AccessToken解碼而來)
         MyUserDetails myUserDetails = myRequestContext.getMyUserDetailsOpt().orElseThrow(() -> new MyUnexpectedException(MyExceptionMsgTemplate.UNAUTHENTICATED_USER));
 
@@ -101,14 +99,12 @@ public class PasswordInfoService {
         List<Integer> pIdList = tagMappingPasswordList.stream().map(TagMappingPassword::getPasswordId).toList();
 
         if(pIdList.isEmpty()) {
-            return ResponseEntity
-                    .ok()
-                    .body(
-                            responseUtil.generateResponseBodyTemplate(
-                                    new QueryPasswordsListData(new ArrayList<>()),
-                                    ""
-                            )
-                    );
+            ResponseBodyTemplate<QueryPasswordsListData> body = responseUtil.generateResponseBodyTemplate(
+                    new QueryPasswordsListData(new ArrayList<>()),
+                    ""
+            );
+
+            return new MyResponseWrapper(MyHttpStatus.SUCCESS, body);
         }
 
         // 3.查詢密碼表
@@ -125,18 +121,16 @@ public class PasswordInfoService {
         });
 
         // 5.返回
-        return ResponseEntity
-                .ok()
-                .body(
-                        responseUtil.generateResponseBodyTemplate(
-                                new QueryPasswordsListData(passwordDtoList),
-                                ""
-                        )
-                );
+        ResponseBodyTemplate<QueryPasswordsListData> body = responseUtil.generateResponseBodyTemplate(
+                new QueryPasswordsListData(passwordDtoList),
+                ""
+        );
+
+        return new MyResponseWrapper(MyHttpStatus.SUCCESS, body);
     }
 
     @Transactional
-    public ResponseEntity<ResponseBodyTemplate<AddPasswordData>> addPassword(AddPasswordReqBody addPasswordReqBody, MyRequestContext myRequestContext) {
+    public MyResponseWrapper addPassword(AddPasswordReqBody addPasswordReqBody, MyRequestContext myRequestContext) {
         // 1. 取出認證後的User資訊(從AccessToken解碼而來)
         MyUserDetails myUserDetails = myRequestContext.getMyUserDetailsOpt().orElseThrow(() -> new MyUnexpectedException(MyExceptionMsgTemplate.UNAUTHENTICATED_USER));
 
@@ -170,17 +164,16 @@ public class PasswordInfoService {
         }
 
         // 5. 返回
-        return ResponseEntity
-                .ok(
-                        responseUtil.generateResponseBodyTemplate(
-                                passwordInfoConverter.passwordPoAndTagMappingPasswordOptToAddPasswordDataDto(passwordPo, tagMappingPasswordPoOpt, aesUtil),
-                                ""
-                        )
-                );
+        ResponseBodyTemplate<AddPasswordData> body = responseUtil.generateResponseBodyTemplate(
+                passwordInfoConverter.passwordPoAndTagMappingPasswordOptToAddPasswordDataDto(passwordPo, tagMappingPasswordPoOpt, aesUtil),
+                ""
+        );
+
+        return new MyResponseWrapper(MyHttpStatus.SUCCESS, body);
     }
 
     @Transactional
-    public ResponseEntity<ResponseBodyTemplate<EditPasswordData>> editPassword(int passwordId, EditPasswordReqBody editPasswordReqBody, MyRequestContext myRequestContext) {
+    public MyResponseWrapper editPassword(int passwordId, EditPasswordReqBody editPasswordReqBody, MyRequestContext myRequestContext) {
         // 1. 取出認證後的User資訊(從AccessToken解碼而來)
         MyUserDetails myUserDetails = myRequestContext.getMyUserDetailsOpt().orElseThrow(() -> new MyUnexpectedException(MyExceptionMsgTemplate.UNAUTHENTICATED_USER));
 
@@ -245,17 +238,16 @@ public class PasswordInfoService {
 
 
         // 7.返回
-        return ResponseEntity
-                .ok(
-                        responseUtil.generateResponseBodyTemplate(
-                                passwordInfoConverter.passwordPoAndTagMappingPasswordOptToEditPasswordDataDto(passwordPo, tagMappingPasswordPoOpt, aesUtil),
-                                ""
-                        )
-                );
+        ResponseBodyTemplate<EditPasswordData> body = responseUtil.generateResponseBodyTemplate(
+                passwordInfoConverter.passwordPoAndTagMappingPasswordOptToEditPasswordDataDto(passwordPo, tagMappingPasswordPoOpt, aesUtil),
+                ""
+        );
+
+        return new MyResponseWrapper(MyHttpStatus.SUCCESS, body);
     }
 
 
-    public ResponseEntity<ResponseBodyTemplate<QueryPasswordData>> queryPassword(int passwordId, MyRequestContext myRequestContext) {
+    public MyResponseWrapper queryPassword(int passwordId, MyRequestContext myRequestContext) {
         // 1. 取出認證後的User資訊(從AccessToken解碼而來)
         MyUserDetails myUserDetails = myRequestContext.getMyUserDetailsOpt().orElseThrow(() -> new MyUnexpectedException(MyExceptionMsgTemplate.UNAUTHENTICATED_USER));
 
@@ -274,18 +266,16 @@ public class PasswordInfoService {
         Optional<TagMappingPassword> tagMappingPasswordOpt = tagMappingPasswordService.getOneOpt(tagMappingPasswordQueryWrapper);
 
         // 4.解密 & 返回
-        return ResponseEntity
-                .ok()
-                .body(
-                        responseUtil.generateResponseBodyTemplate(
-                                passwordInfoConverter.passwordPoAndTagMappingPasswordOptToQueryPasswordDataDto(passwordPo, tagMappingPasswordOpt, aesUtil),
-                                ""
-                        )
-                );
+        ResponseBodyTemplate<QueryPasswordData> body = responseUtil.generateResponseBodyTemplate(
+                passwordInfoConverter.passwordPoAndTagMappingPasswordOptToQueryPasswordDataDto(passwordPo, tagMappingPasswordOpt, aesUtil),
+                ""
+        );
+
+        return new MyResponseWrapper(MyHttpStatus.SUCCESS, body);
     }
 
     @Transactional
-    public ResponseEntity<ResponseBodyTemplate<JsonNode>> deletePassword(int passwordId, MyRequestContext myRequestContext) {
+    public MyResponseWrapper deletePassword(int passwordId, MyRequestContext myRequestContext) {
         // 1. 取出認證後的User資訊(從AccessToken解碼而來)
         MyUserDetails myUserDetails = myRequestContext.getMyUserDetailsOpt().orElseThrow(() -> new MyUnexpectedException(MyExceptionMsgTemplate.UNAUTHENTICATED_USER));
 
@@ -307,9 +297,7 @@ public class PasswordInfoService {
         }
 
         // 4.返回
-        return ResponseEntity
-                .noContent()
-                .build();
+        return new MyResponseWrapper(MyHttpStatus.SUCCESS_NO_CONTENT, null);
     }
 
 

@@ -2,7 +2,7 @@ package raica.pwmanager.util;
 
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
-import raica.pwmanager.consts.LogType;
+import raica.pwmanager.enums.LogType;
 
 import java.util.Optional;
 import java.util.UUID;

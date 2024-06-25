@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import raica.pwmanager.consts.ApiConst;
 import raica.pwmanager.consts.RequestAttributeFieldName;
 import raica.pwmanager.entities.bo.MyRequestContext;
+import raica.pwmanager.entities.bo.MyResponseWrapper;
 import raica.pwmanager.entities.dto.send.QueryCategoriesData;
 import raica.pwmanager.entities.dto.send.ResponseBodyTemplate;
 import raica.pwmanager.service.category.CategoryInfoService;
@@ -26,7 +27,7 @@ public class CategoryInfoController {
     private CategoryInfoService categoryInfoService;
 
     @GetMapping(path = ApiConst.Path.QUERY_CATEGORY_LIST)
-    public ResponseEntity<ResponseBodyTemplate<QueryCategoriesData>> queryCategories(@RequestAttribute(value = RequestAttributeFieldName.MY_REQ_CONTEXT) MyRequestContext myReqContext) {
+    public MyResponseWrapper queryCategories(@RequestAttribute(value = RequestAttributeFieldName.MY_REQ_CONTEXT) MyRequestContext myReqContext) {
         return categoryInfoService.queryCategories(myReqContext);
     }
 

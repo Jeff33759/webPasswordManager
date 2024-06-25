@@ -4,10 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import raica.pwmanager.consts.MFAType;
+import raica.pwmanager.entities.bo.MyResponseWrapper;
+import raica.pwmanager.enums.MFAType;
 import raica.pwmanager.dao.extension.impl.UserService;
 import raica.pwmanager.entities.bo.LoginVerificationCodeWrapper;
 import raica.pwmanager.entities.bo.MyRequestContext;
@@ -20,6 +19,8 @@ import raica.pwmanager.entities.dto.send.LoginData;
 import raica.pwmanager.entities.dto.send.RenewAccessTokenData;
 import raica.pwmanager.entities.dto.send.ResponseBodyTemplate;
 import raica.pwmanager.entities.po.User;
+import raica.pwmanager.enums.MyHttpStatus;
+import raica.pwmanager.exception.LoginException;
 import raica.pwmanager.exception.MyUnexpectedException;
 import raica.pwmanager.prop.AppInfoProps;
 import raica.pwmanager.prop.ExpirationProps;
@@ -73,11 +74,6 @@ public class LoginService {
      */
     private final LoginData EMPTY_LOGIN_DATA = new LoginData();
 
-    /**
-     * 空的data欄位，用於刷新訪問令牌API操作失敗時的response。
-     * 因為呼叫頻繁，故採用單例，節省系統開銷。
-     */
-    private final RenewAccessTokenData EMPTY_RENEW_ACCESS_TOKEN_DATA = new RenewAccessTokenData();
 
     /**
      * Spring Bean完成註冊後，初始化一些元件。
@@ -88,7 +84,7 @@ public class LoginService {
     }
 
 
-    public ResponseEntity<ResponseBodyTemplate<LoginData>> login(LoginReqBody loginReqBody, MyRequestContext myRequestContext) {
+    public MyResponseWrapper login(LoginReqBody loginReqBody, MyRequestContext myRequestContext) {
 
         // 1. 根據郵箱從DB撈出User資訊
         QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
@@ -98,14 +94,7 @@ public class LoginService {
 
         // 2.驗證郵箱
         if (userOptional.isEmpty()) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-                            responseUtil.generateResponseBodyTemplate(
-                                    EMPTY_LOGIN_DATA,
-                                    "郵箱不存在。"
-                            )
-                    );
+            throw new LoginException(MyHttpStatus.ERROR_BAD_REQUEST, "郵箱不存在。");
         }
 
         User user = userOptional.get();
@@ -114,14 +103,7 @@ public class LoginService {
         String mainPasswordInDB = aesUtil.decryptFromDB(user.getMainPassword());
 
         if (!mainPasswordInDB.equals(loginReqBody.getPassword())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-                            responseUtil.generateResponseBodyTemplate(
-                                    EMPTY_LOGIN_DATA,
-                                    "密碼錯誤。"
-                            )
-                    );
+            throw new LoginException(MyHttpStatus.ERROR_BAD_REQUEST, "密碼錯誤。");
         }
 
         // 4. 若用戶未激活
@@ -132,14 +114,7 @@ public class LoginService {
                     myRequestContext
             );
 
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-                            responseUtil.generateResponseBodyTemplate(
-                                    EMPTY_LOGIN_DATA,
-                                    String.format("用戶註冊後尚未激活，已重新發送郵件至 %s 郵箱，請點擊信內連結，激活您的帳戶。", user.getEmail())
-                            )
-                    );
+            throw new LoginException(MyHttpStatus.ERROR_BAD_REQUEST, String.format("用戶註冊後尚未激活，已重新發送郵件至 %s 郵箱，請點擊信內連結，激活您的帳戶。", user.getEmail()));
         }
 
         // 5. 製作授權物件
@@ -154,33 +129,30 @@ public class LoginService {
      *
      * @throws MyUnexpectedException 當User的mfaTypeNum沒有匹配到任一MFAType列舉的時候拋出。通常不會遇到。
      */
-    ResponseEntity<ResponseBodyTemplate<LoginData>> responseByUserMFAType(MyUserDetails myUserDetails, MyRequestContext myRequestContext) throws MyUnexpectedException {
+    MyResponseWrapper responseByUserMFAType(MyUserDetails myUserDetails, MyRequestContext myRequestContext) throws MyUnexpectedException {
         MFAType mfaType = MFAType.fromTypeNum(myUserDetails.getMfaType());
 
         return switch (mfaType) {
             case EMAIL -> {
                 this.sendVerificationCodeToUserEmail(myUserDetails, myRequestContext);
 
-                yield ResponseEntity
-                        .status(HttpStatus.ACCEPTED)
-                        .body(
-                                responseUtil.generateResponseBodyTemplate(
-                                        EMPTY_LOGIN_DATA,
-                                        String.format("請至 %s 收取驗證碼，進行二階段身份驗證。", mfaType.getTypeName())
-                                )
-                        );
+                ResponseBodyTemplate<LoginData> body = responseUtil.generateResponseBodyTemplate(
+                        EMPTY_LOGIN_DATA,
+                        String.format("請至 %s 收取驗證碼，進行二階段身份驗證。", mfaType.getTypeName())
+                );
+
+                yield new MyResponseWrapper(MyHttpStatus.ACCEPTED, body);
             }
             case NONE -> {
                 // 登入成功，將授權物件設置進Context，因Filter chain或interceptor chain可能會用到
                 myRequestContext.setMyUserDetailsOpt(Optional.of(myUserDetails));
 
-                yield ResponseEntity
-                        .ok(
-                                responseUtil.generateResponseBodyTemplate(
-                                        new LoginData(jwtUtil.generateAccessToken(myUserDetails), jwtUtil.generateRefreshToken(myUserDetails)),
-                                        ""
-                                )
-                        );
+                ResponseBodyTemplate<LoginData> body = responseUtil.generateResponseBodyTemplate(
+                        new LoginData(jwtUtil.generateAccessToken(myUserDetails), jwtUtil.generateRefreshToken(myUserDetails)),
+                        ""
+                );
+
+                yield new MyResponseWrapper(MyHttpStatus.ACCEPTED, body);
             }
             case UNKNOWN ->
                     throw new MyUnexpectedException("User's mfaTypeNum does not match any MFAType enum but it should not occurred."); //通常不該出現，除非DB有人手動改到值。
@@ -211,33 +183,19 @@ public class LoginService {
     }
 
 
-    public ResponseEntity<ResponseBodyTemplate<LoginData>> loginMFAVerification(LoginMFAVerificationReqBody loginMFAVerificationReqBody, MyRequestContext myRequestContext) {
+    public MyResponseWrapper loginMFAVerification(LoginMFAVerificationReqBody loginMFAVerificationReqBody, MyRequestContext myRequestContext) {
         // 1. 檢查驗證碼是否過期
         Optional<LoginVerificationCodeWrapper> loginVerificationCodeWrapperOptional = this.userEmailToLoginVerificationCodeWrapperMap.getOpt(loginMFAVerificationReqBody.getEmail());
 
         if (loginVerificationCodeWrapperOptional.isEmpty()) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-                            responseUtil.generateResponseBodyTemplate(
-                                    EMPTY_LOGIN_DATA,
-                                    "驗證碼已經失效，請重新登入獲取新的驗證碼。"
-                            )
-                    );
+            throw new LoginException(MyHttpStatus.ERROR_BAD_REQUEST, "驗證碼已經失效，請重新登入獲取新的驗證碼。");
         }
 
         LoginVerificationCodeWrapper loginVerificationCodeWrapper = loginVerificationCodeWrapperOptional.get();
 
         // 2.檢查驗證碼是否正確
         if (!loginVerificationCodeWrapper.getVerificationCode().equals(loginMFAVerificationReqBody.getVerificationCode())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-                            responseUtil.generateResponseBodyTemplate(
-                                    EMPTY_LOGIN_DATA,
-                                    String.format("驗證碼 %s 錯誤，請確認驗證碼後重新輸入。", loginMFAVerificationReqBody.getVerificationCode())
-                            )
-                    );
+            throw new LoginException(MyHttpStatus.ERROR_BAD_REQUEST, String.format("驗證碼 %s 錯誤，請確認驗證碼後重新輸入。", loginMFAVerificationReqBody.getVerificationCode()));
         }
 
         // 3. 清除本地緩存(一個驗證碼只能使用一次)
@@ -247,19 +205,18 @@ public class LoginService {
         myRequestContext.setMyUserDetailsOpt(Optional.of(loginVerificationCodeWrapper.getMyUserDetails()));
 
         // 5. 製作Token & 返回
-        return ResponseEntity
-                .ok(
-                        responseUtil.generateResponseBodyTemplate(
-                                new LoginData(jwtUtil.generateAccessToken(loginVerificationCodeWrapper.getMyUserDetails()), jwtUtil.generateRefreshToken(loginVerificationCodeWrapper.getMyUserDetails())),
-                                ""
-                        )
-                );
+        ResponseBodyTemplate<LoginData> body = responseUtil.generateResponseBodyTemplate(
+                new LoginData(jwtUtil.generateAccessToken(loginVerificationCodeWrapper.getMyUserDetails()), jwtUtil.generateRefreshToken(loginVerificationCodeWrapper.getMyUserDetails())),
+                ""
+        );
+
+        return new MyResponseWrapper(MyHttpStatus.SUCCESS, body);
     }
 
     /**
      * @throws JwtException 若refreshToken失效，或者AccessToken被人為竄改造成解析失敗。
      */
-    public ResponseEntity<ResponseBodyTemplate<RenewAccessTokenData>> renewAccessTokenByRefreshToken(RenewAccessTokenReqBody renewAccessTokenReqBody, MyRequestContext myRequestContext) throws JwtException {
+    public MyResponseWrapper renewAccessTokenByRefreshToken(RenewAccessTokenReqBody renewAccessTokenReqBody, MyRequestContext myRequestContext) throws JwtException {
         // 1. 解析refreshToken是否有效
         Claims refreshTokenPayload = jwtUtil.parseRefreshToken(renewAccessTokenReqBody.getRefreshToken()).getPayload();
 
@@ -268,27 +225,19 @@ public class LoginService {
 
         // 3. 比對兩個Token的userId是否一致，以免有人盜用別人失效的accessToken加上自己有效的refreshToken，得到別人的accessToken
         if (!refreshTokenPayload.get("userId", Integer.class).equals(accessTokenPayload.get("userId", Integer.class))) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-                            responseUtil.generateResponseBodyTemplate(
-                                    EMPTY_RENEW_ACCESS_TOKEN_DATA,
-                                    "令牌匹配錯誤，請重新登入，或者聯繫我們。請不要提供自己的令牌給第三方人士，或者盜取他人的令牌。"
-                            )
-                    );
+            throw new LoginException(MyHttpStatus.ERROR_BAD_REQUEST, "令牌匹配錯誤，請重新登入，或者聯繫我們。請不要提供自己的令牌給第三方人士，或者盜取他人的令牌。");
         }
 
         // 4. 轉換物件
         MyUserDetails myUserDetails = jwtUtil.generateMyUserDetailsByAccessTokenPayload(accessTokenPayload);
 
         // 5. 製作新的accessToken & 返回
-        return ResponseEntity
-                .ok(
-                        responseUtil.generateResponseBodyTemplate(
-                                new RenewAccessTokenData(jwtUtil.generateAccessToken(myUserDetails)),
-                                ""
-                        )
-                );
+        ResponseBodyTemplate<RenewAccessTokenData> body = responseUtil.generateResponseBodyTemplate(
+                new RenewAccessTokenData(jwtUtil.generateAccessToken(myUserDetails)),
+                ""
+        );
+
+        return new MyResponseWrapper(MyHttpStatus.SUCCESS, body);
     }
 
 

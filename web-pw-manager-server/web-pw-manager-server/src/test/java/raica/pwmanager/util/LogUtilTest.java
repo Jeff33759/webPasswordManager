@@ -8,7 +8,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.springframework.boot.test.context.SpringBootTest;
-import raica.pwmanager.consts.LogType;
+import raica.pwmanager.enums.LogType;
 
 import java.util.Optional;
 

@@ -2,17 +2,15 @@ package raica.pwmanager.service.usermanagement;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import raica.pwmanager.consts.MyExceptionMsgTemplate;
 import raica.pwmanager.dao.extension.impl.UserService;
 import raica.pwmanager.entities.bo.MyRequestContext;
+import raica.pwmanager.entities.bo.MyResponseWrapper;
 import raica.pwmanager.entities.bo.MyUserDetails;
 import raica.pwmanager.entities.dto.receive.EditUserMainPasswordReqBody;
 import raica.pwmanager.entities.dto.receive.EditUserReqBody;
@@ -21,7 +19,9 @@ import raica.pwmanager.entities.dto.send.EditUserData;
 import raica.pwmanager.entities.dto.send.QueryUserData;
 import raica.pwmanager.entities.dto.send.ResponseBodyTemplate;
 import raica.pwmanager.entities.po.User;
+import raica.pwmanager.enums.MyHttpStatus;
 import raica.pwmanager.exception.MyUnexpectedException;
+import raica.pwmanager.exception.UserInfoException;
 import raica.pwmanager.util.AESUtil;
 import raica.pwmanager.util.JWTUtil;
 import raica.pwmanager.util.ResponseUtil;
@@ -50,18 +50,13 @@ public class UserInfoService {
     @Autowired
     private UserInfoService.UserInfoConverter userInfoConverter;
 
-    /**
-     * 空的data欄位，因為呼叫頻繁，故採用單例，節省系統開銷。
-     */
-    private final JsonNode EMPTY_EDIT_USER_PASSWORD_DATA = JsonNodeFactory.instance.objectNode();
-
 
     /**
      * 和{@link  raica.pwmanager.service.usermanagement.LoginService#renewAccessTokenByRefreshToken(RenewAccessTokenReqBody, MyRequestContext)}不同，此API會重新去DB獲取最新的User資訊，製成AccessToken。
      *
      * @return MyUnexpectedException 當查詢用戶失敗，通常不該發生。
      */
-    public ResponseEntity<ResponseBodyTemplate<QueryUserData>> queryUser(MyRequestContext myRequestContext) {
+    public MyResponseWrapper queryUser(MyRequestContext myRequestContext) {
         //1. 取出認證後的User資訊(從AccessToken解碼而來)
         MyUserDetails myUserDetails = myRequestContext.getMyUserDetailsOpt().orElseThrow(() -> new MyUnexpectedException(MyExceptionMsgTemplate.UNAUTHENTICATED_USER));
 
@@ -73,19 +68,18 @@ public class UserInfoService {
         MyUserDetails latestMyUserDetails = jwtUtil.generateMyUserDetailsByUserPo(latestUserFromDB);
 
         //4. 製作AccessToken & 返回
-        return ResponseEntity
-                .ok(
-                        responseUtil.generateResponseBodyTemplate(
-                                new QueryUserData(jwtUtil.generateAccessToken(latestMyUserDetails)),
-                                ""
-                        )
-                );
+        ResponseBodyTemplate<QueryUserData> body = responseUtil.generateResponseBodyTemplate(
+                new QueryUserData(jwtUtil.generateAccessToken(latestMyUserDetails)),
+                ""
+        );
+
+        return new MyResponseWrapper(MyHttpStatus.SUCCESS, body);
     }
 
     /**
      * @return MyUnexpectedException 當更新用戶失敗，通常不該發生。
      */
-    public ResponseEntity<ResponseBodyTemplate<EditUserData>> editUser(EditUserReqBody editUserReqBody, MyRequestContext myRequestContext) throws MyUnexpectedException {
+    public MyResponseWrapper editUser(EditUserReqBody editUserReqBody, MyRequestContext myRequestContext) throws MyUnexpectedException {
         // 1. 取出認證後的User資訊(從AccessToken解碼而來)
         MyUserDetails myUserDetails = myRequestContext.getMyUserDetailsOpt().orElseThrow(() -> new MyUnexpectedException(MyExceptionMsgTemplate.UNAUTHENTICATED_USER));
 
@@ -110,16 +104,15 @@ public class UserInfoService {
         myRequestContext.setMyUserDetailsOpt(Optional.of(editedMyUserDetails));
 
         // 6. 製作AccessToken & 返回
-        return ResponseEntity
-                .ok(
-                        responseUtil.generateResponseBodyTemplate(
-                                new EditUserData(jwtUtil.generateAccessToken(editedMyUserDetails)),
-                                ""
-                        )
-                );
+        ResponseBodyTemplate<EditUserData> body = responseUtil.generateResponseBodyTemplate(
+                new EditUserData(jwtUtil.generateAccessToken(editedMyUserDetails)),
+                ""
+        );
+
+        return new MyResponseWrapper(MyHttpStatus.SUCCESS, body);
     }
 
-    public ResponseEntity<ResponseBodyTemplate<JsonNode>> editUserMainPassword(EditUserMainPasswordReqBody editUserMainPasswordReqBody, MyRequestContext myRequestContext) {
+    public MyResponseWrapper editUserMainPassword(EditUserMainPasswordReqBody editUserMainPasswordReqBody, MyRequestContext myRequestContext) {
         // 1. 取出認證後的User資訊(從AccessToken解碼而來)
         MyUserDetails myUserDetails = myRequestContext.getMyUserDetailsOpt().orElseThrow(() -> new MyUnexpectedException(MyExceptionMsgTemplate.UNAUTHENTICATED_USER));
 
@@ -135,14 +128,7 @@ public class UserInfoService {
         String oldMainPasswordPlainText = aesUtil.decryptFromDB(userOnlyHasPasswordFieldValue.getMainPassword());
 
         if (!oldMainPasswordPlainText.equals(editUserMainPasswordReqBody.getPassword())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-                            responseUtil.generateResponseBodyTemplate(
-                                    EMPTY_EDIT_USER_PASSWORD_DATA,
-                                    "原密碼輸入錯誤。"
-                            )
-                    );
+            throw new UserInfoException(MyHttpStatus.ERROR_BAD_REQUEST, "原密碼輸入錯誤。");
         }
 
         // 4. 加密新密碼 & 更新用戶新密碼
@@ -158,9 +144,7 @@ public class UserInfoService {
         }
 
         // 5. 返回
-        return ResponseEntity
-                .noContent()
-                .build();
+        return new MyResponseWrapper(MyHttpStatus.SUCCESS_NO_CONTENT, null);
     }
 
 

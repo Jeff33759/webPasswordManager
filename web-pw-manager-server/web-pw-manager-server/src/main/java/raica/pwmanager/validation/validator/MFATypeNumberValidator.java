@@ -1,6 +1,6 @@
 package raica.pwmanager.validation.validator;
 
-import raica.pwmanager.consts.MFAType;
+import raica.pwmanager.enums.MFAType;
 import raica.pwmanager.validation.annotation.ValidMFATypeNumber;
 
 import javax.validation.ConstraintValidator;

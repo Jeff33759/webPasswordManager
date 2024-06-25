@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import raica.pwmanager.consts.ApiConst;
 import raica.pwmanager.consts.RequestAttributeFieldName;
 import raica.pwmanager.entities.bo.MyRequestContext;
+import raica.pwmanager.entities.bo.MyResponseWrapper;
 import raica.pwmanager.entities.dto.receive.AddTagReqBody;
 import raica.pwmanager.entities.dto.receive.EditTagReqBody;
 import raica.pwmanager.entities.dto.send.AddTagData;
@@ -28,22 +29,22 @@ public class TagInfoController {
     private TagInfoService tagInfoService;
 
     @GetMapping(path = ApiConst.Path.QUERY_TAG_LIST)
-    public ResponseEntity<ResponseBodyTemplate<QueryTagsData>> queryTags(@RequestAttribute(value = RequestAttributeFieldName.MY_REQ_CONTEXT) MyRequestContext myReqContext) {
+    public MyResponseWrapper queryTags(@RequestAttribute(value = RequestAttributeFieldName.MY_REQ_CONTEXT) MyRequestContext myReqContext) {
         return tagInfoService.queryTags(myReqContext);
     }
 
     @PostMapping(path = ApiConst.Path.ADD_TAG)
-    public ResponseEntity<ResponseBodyTemplate<AddTagData>> addTag(@Valid @RequestBody AddTagReqBody addTagReqBody, @RequestAttribute(value = RequestAttributeFieldName.MY_REQ_CONTEXT) MyRequestContext myReqContext) {
+    public MyResponseWrapper addTag(@Valid @RequestBody AddTagReqBody addTagReqBody, @RequestAttribute(value = RequestAttributeFieldName.MY_REQ_CONTEXT) MyRequestContext myReqContext) {
         return tagInfoService.addTag(addTagReqBody, myReqContext);
     }
 
     @PutMapping(path = ApiConst.Path.EDIT_TAG)
-    public ResponseEntity<ResponseBodyTemplate<EditTagData>> editTag(@PathVariable("id") Integer tagId, @Valid @RequestBody EditTagReqBody editTagReqBody, @RequestAttribute(value = RequestAttributeFieldName.MY_REQ_CONTEXT) MyRequestContext myReqContext) {
+    public MyResponseWrapper editTag(@PathVariable("id") Integer tagId, @Valid @RequestBody EditTagReqBody editTagReqBody, @RequestAttribute(value = RequestAttributeFieldName.MY_REQ_CONTEXT) MyRequestContext myReqContext) {
         return tagInfoService.editTag(tagId, editTagReqBody, myReqContext);
     }
 
     @DeleteMapping(path = ApiConst.Path.DELETE_TAG)
-    public ResponseEntity<ResponseBodyTemplate<JsonNode>> deleteTag(@PathVariable("id") Integer tagId, @RequestAttribute(value = RequestAttributeFieldName.MY_REQ_CONTEXT) MyRequestContext myReqContext) {
+    public MyResponseWrapper deleteTag(@PathVariable("id") Integer tagId, @RequestAttribute(value = RequestAttributeFieldName.MY_REQ_CONTEXT) MyRequestContext myReqContext) {
         return tagInfoService.deleteTag(tagId, myReqContext);
     }
 
