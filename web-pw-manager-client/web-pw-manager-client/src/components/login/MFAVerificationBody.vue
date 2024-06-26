@@ -67,7 +67,7 @@ const submitMFAVerificationForm = () => {
 <template>
   <el-row justify="center" class="not-login-main-padding">
     <el-col :sm="18" :md="12">
-      <el-form size="large" :model="mfaVerificationFormData" :rules="rules" ref="mfaVerificationForm" class="my-form-label-size" @submit.native.prevent> <!-- 當表單只有一個input，就需要這樣去阻止預設的提交事件，不然按下Enter會有很奇怪的現象 -->
+      <el-form size="large" :model="mfaVerificationFormData" :rules="rules" ref="mfaVerificationForm" class="my-form-label-size" label-width="auto" @submit.native.prevent> <!-- 當表單只有一個input，就需要這樣去阻止預設的提交事件，不然按下Enter會有很奇怪的現象 -->
         <el-form-item label="驗證碼" prop="verificationCode" @keyup.native.enter="submitMFAVerificationForm"> <!-- 當表單只有一個input，就需要這樣去阻止預設的提交事件，不然按下Enter會有很奇怪的現象 -->
           <el-input v-model="mfaVerificationFormData.verificationCode" autocomplete="off"></el-input>
         </el-form-item>

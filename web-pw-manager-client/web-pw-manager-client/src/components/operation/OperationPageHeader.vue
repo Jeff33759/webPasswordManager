@@ -343,7 +343,7 @@ prepareNextRenewATTask();
       </el-col>
     </el-row>
 
-    <el-form :model="userInfoPageData" :rules="userEditRules" ref="userEditForm" hide-required-asterisk
+    <el-form :model="userInfoPageData" :rules="userEditRules" ref="userEditForm" label-width="auto" hide-required-asterisk
              class="my-user-edit-form-label-size" style="margin-top: 10px">
       <el-form-item size="large" label="用戶名" prop="userName">
         <el-input v-model="userInfoPageData.userName" :disabled="!isUserEditionMode"></el-input>
@@ -382,7 +382,7 @@ prepareNextRenewATTask();
   <el-dialog @open="openEditMainPasswordDialog" v-model="editMainPasswordDialogVisible" title="更改登入密碼"
              width="30%">
     <el-form :model="editMainPasswordPageData" :rules="editMainPasswordRules" ref="editMainPasswordForm"
-             class="my-edit-main-password-form-label-size" style="margin-top: 10px">
+             label-width="auto" class="my-edit-main-password-form-label-size" style="margin-top: 10px">
       <el-form-item size="large" label="原密碼" prop="password">
         <el-input v-model="editMainPasswordPageData.password"></el-input>
       </el-form-item>

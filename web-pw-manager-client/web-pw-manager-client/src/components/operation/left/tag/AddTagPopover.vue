@@ -90,7 +90,7 @@ const submitAddTagForm = () => {
       </el-button>
     </template>
 
-    <el-form :model="addTagFormData" :rules="addTagRules" ref="addTagForm">
+    <el-form :model="addTagFormData" :rules="addTagRules" ref="addTagForm" label-width="auto">
       <el-form-item label="標籤名" prop="tagName">
         <el-input v-model="addTagFormData.tagName"></el-input>
       </el-form-item>

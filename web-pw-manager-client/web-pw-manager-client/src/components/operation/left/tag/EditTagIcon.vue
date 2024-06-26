@@ -99,7 +99,7 @@ const submitEditTagForm = () => {
       </el-icon>
     </template>
 
-    <el-form :model="editTagFormData" :rules="editTagRules" ref="editTagForm">
+    <el-form :model="editTagFormData" :rules="editTagRules" ref="editTagForm" label-width="auto">
       <el-form-item label="標籤名" prop="tagName">
         <el-input v-model="editTagFormData.tagName"></el-input>
       </el-form-item>

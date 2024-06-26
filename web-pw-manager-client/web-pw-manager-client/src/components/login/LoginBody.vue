@@ -86,7 +86,7 @@ const submitLoginForm = () => {
 <template>
   <el-row justify="center" class="not-login-main-padding">
     <el-col :sm="18" :md="12">
-      <el-form  size="large" :model="loginFormData" :rules="rules" ref="loginForm" class="my-form-label-size">
+      <el-form  size="large" :model="loginFormData" :rules="rules" ref="loginForm" label-width="auto" class="my-form-label-size">
         <el-form-item label="郵箱" prop="email">
           <el-input v-model="loginFormData.email" autocomplete="off"></el-input>
         </el-form-item>

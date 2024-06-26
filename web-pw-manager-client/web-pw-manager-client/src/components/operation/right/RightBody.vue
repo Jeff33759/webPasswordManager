@@ -214,7 +214,7 @@ const callEditPwApi = () => {
 
 <template>
   <div class="right-body-content" v-if="selectedPasswordInfo">
-    <el-form :model="pwFormData" :rules="pwRules" ref="pwForm" class="right-body-form-label-size">
+    <el-form :model="pwFormData" :rules="pwRules" ref="pwForm" class="right-body-form-label-size" label-width="auto">
       <el-form-item size="large" label="密碼標題" prop="title">
         <el-input v-model="pwFormData.title"></el-input>
       </el-form-item>
