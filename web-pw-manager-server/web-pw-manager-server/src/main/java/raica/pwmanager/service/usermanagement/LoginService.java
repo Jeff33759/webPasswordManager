@@ -152,7 +152,7 @@ public class LoginService {
                         ""
                 );
 
-                yield new MyResponseWrapper(MyHttpStatus.ACCEPTED, body);
+                yield new MyResponseWrapper(MyHttpStatus.SUCCESS, body);
             }
             case UNKNOWN ->
                     throw new MyUnexpectedException("User's mfaTypeNum does not match any MFAType enum but it should not occurred."); //通常不該出現，除非DB有人手動改到值。

@@ -3,6 +3,12 @@ import {computed, inject, ref, watchEffect} from 'vue';
 import {useStore} from "vuex";
 import {ElMessage} from "element-plus";
 import PasswordGenerator from "@/components/operation/right/PasswordGenerator.vue";
+import CategoryClassOneIcon from "@/components/operation/left/category-icon/ClassOne.vue";
+import CategoryClassTwoIcon from "@/components/operation/left/category-icon/ClassTwo.vue";
+import Avatar from "@/components/operation/Avatar.vue";
+
+
+
 const apiConst = inject("apiConst");
 const {callPostApi, callPutApi} = inject("myApiSender");
 const vuexStore = useStore(); //獲取Vuex實例
@@ -214,7 +220,22 @@ const callEditPwApi = () => {
 
 <template>
   <div class="right-body-content" v-if="selectedPasswordInfo">
+
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+      <div style="max-width: 100px;">
+        <el-tooltip effect="dark" content="一級機密" placement="top" v-if="selectedPasswordInfo.categoryId === 1">
+          <CategoryClassOneIcon />
+        </el-tooltip>
+
+        <el-tooltip effect="dark" content="二級機密" placement="top" v-if="selectedPasswordInfo.categoryId === 2">
+          <CategoryClassTwoIcon />
+        </el-tooltip>
+      </div>
+    </div>
+    
+
     <el-form :model="pwFormData" :rules="pwRules" ref="pwForm" class="right-body-form-label-size" label-width="auto">
+
       <el-form-item size="large" label="密碼標題" prop="title">
         <el-input v-model="pwFormData.title"></el-input>
       </el-form-item>
@@ -237,12 +258,10 @@ const callEditPwApi = () => {
         <PasswordGenerator />
       </el-dialog>
 
-
-
       <el-form-item size="large" label="備註" prop="remark">
         <el-input size="large" type="textarea" v-model="pwFormData.remark" :rows="4"></el-input>
       </el-form-item>
-      <el-form-item size="large" label="分類" prop="categoryName">
+      <el-form-item size="large" label="分類" prop="categoryName" v-if="selectedPasswordInfo.categoryId === -1"> <!-- 新增時，才讓人選取 -->
         <el-select v-model="pwFormData.categoryName" :disabled="selectedPasswordId">
           <el-option
               v-for="(category) in categories"

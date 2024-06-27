@@ -8,6 +8,8 @@ import {useRouter} from 'vue-router';
 import {showAlertMessage} from "@/js/MessageBoxUtil.js";
 import {ElMessage} from "element-plus";
 import Avatar from "@/components/operation/Avatar.vue";
+import CategoryClassOneIcon from "./category-icon/ClassOne.vue";
+import CategoryClassTwoIcon from "./category-icon/ClassTwo.vue";
 
 const {callGetApi} = inject("myApiSender");
 const apiConst = inject("apiConst");
@@ -109,7 +111,16 @@ watch(hasClickedAddPwButton, (newValue) => {
       </template>
       <el-menu-item v-for="category in categoriesList" :key="category.id" :index="'category-' + category.id"
                     class="text-overflow-hidden">
-        {{ category.name }}
+        <div class="menu-item-category-content full-height">
+          <div class="icon-container full-height">
+            <CategoryClassOneIcon v-if="category.id === 1" />
+            <CategoryClassTwoIcon v-else-if="category.id === 2" />
+          </div>
+          <div class="text-overflow-hidden" :title="category.name">
+            {{ category.name }}
+          </div>
+        </div>
+
       </el-menu-item>
     </el-sub-menu>
     <el-sub-menu index="tag">
@@ -141,5 +152,16 @@ watch(hasClickedAddPwButton, (newValue) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.menu-item-category-content {
+  display: flex;
+  align-items: center;
+}
+
+.icon-container {
+  margin-right: 10px;
+  max-width: 25px;
+  display: flex;
 }
 </style>

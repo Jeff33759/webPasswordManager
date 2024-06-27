@@ -83,11 +83,14 @@ const passwordStrengthStatus = computed(() => {
       <el-form-item label="密碼長度">
         <el-slider v-model="form.length" :min="6" :max="20" show-input></el-slider>
       </el-form-item>
-      <el-form-item>
-        <el-checkbox v-model="form.includeNumbers">包含數字</el-checkbox>
-        <el-checkbox v-model="form.includeSymbols">包含符號</el-checkbox>
-      </el-form-item>
       <el-row justify="center">
+        <el-form-item>
+          <el-checkbox v-model="form.includeNumbers">包含數字</el-checkbox>
+          <el-checkbox v-model="form.includeSymbols">包含符號</el-checkbox>
+        </el-form-item>
+      </el-row>
+
+      <el-row justify="center" style="margin: 5px 0 20px 0">
         <el-col :span="12">
           <el-form-item>
             <el-button type="primary" @click="generatePassword" class="full-width">生成</el-button>
